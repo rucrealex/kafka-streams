@@ -7,15 +7,17 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.Consumed;
-import org.apache.kafka.streams.kstream.KStream;
+import org.apache.kafka.streams.kstream.*;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import ru.crealex.kafka.streams.model.Title;
+import ru.crealex.kafka.streams.model.TitleTime;
+import ru.crealex.kafka.streams.model.WorkTime;
 import ru.crealex.kafka.streams.utility.JsonPOJOSerializer;
 
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
@@ -23,10 +25,8 @@ public class Bootstrap {
 
     @EventListener
     public void onApplicationEvent(ContextRefreshedEvent event) {
-        log.info(event.getApplicationContext().getApplicationName() + " started.");
-
         Properties properties = new Properties();
-        properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "titles1");
+        properties.put(StreamsConfig.APPLICATION_ID_CONFIG, "titles_app");
         properties.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         properties.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         properties.put(StreamsConfig.DEFAULT_WINDOWED_KEY_SERDE_INNER_CLASS, Serdes.String().getClass());
@@ -37,18 +37,45 @@ public class Bootstrap {
         properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
         final StreamsBuilder builder = new StreamsBuilder();
-        final KStream<String, Title> titles = builder.stream("titles", Consumed.with(Serdes.String(), new JsonPOJOSerializer<>()));
-        final KStream<String, Title> workTimes = builder.stream("times", Consumed.with(Serdes.String(), new JsonPOJOSerializer<>()));
+        final KStream<String, Title> titles = builder.stream("titles", Consumed.with(Serdes.String(), new JsonPOJOSerializer<>(Title.class)));
+        final KStream<String, WorkTime> workTimes = builder.stream("times", Consumed.with(Serdes.String(), new JsonPOJOSerializer<>(WorkTime.class)));
 
-        titles.filter((key, value) -> value != null)
-                .foreach((key, value) -> log.info(String.valueOf(value)));
+        KStream<String, WorkTime> worksTimesWithKey = workTimes
+                .filter((key, workTime) -> workTime != null)
+                .selectKey((key, workTime) -> String.valueOf(workTime.getTitleId()));
 
-        titles.filter((key, value) -> value != null)
-              .mapValues(value -> value.getName()).to("titles-output");
+        worksTimesWithKey.filter((key, value) -> value != null)
+                .foreach((key, value) -> log.debug(key + " " + String.valueOf(value)));
 
+        KStream<String, Title> titlesWithKeys = titles
+                .filter((key, title) -> title != null)
+                .selectKey((key, title) -> String.valueOf(title.getId()));
+
+        titlesWithKeys.filter((key, value) -> value != null)
+                .foreach((key, value) -> log.debug(key + " " + String.valueOf(value)));
+
+        KStream<String, TitleTime> joined = titlesWithKeys.leftJoin(worksTimesWithKey, (title, time) -> {
+                    TitleTime titleTime = new TitleTime();
+                    log.debug(String.valueOf(title));
+                    titleTime.setId(title.getId());
+                    titleTime.setName(title.getName());
+                    if(time != null) {
+                        titleTime.setSumHours(time.getHours());
+                    } else {
+                        titleTime.setSumHours(0L);
+                    }
+
+                    return titleTime;
+                },
+                JoinWindows.of(TimeUnit.SECONDS.toDays(7)),
+                Joined.with(Serdes.String(), new JsonPOJOSerializer<>(Title.class), new JsonPOJOSerializer<>(WorkTime.class)));
+
+        joined.foreach((key, value) -> log.debug(key + " " + String.valueOf(value)));
+
+        joined.to("titles-output");
 
         Topology topology = builder.build();
-        log.debug(topology.describe().toString());
+        log.info(topology.describe().toString());
 
         KafkaStreams streams = new KafkaStreams(topology, properties);
         streams.start();

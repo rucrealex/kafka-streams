@@ -9,6 +9,7 @@ import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
 import ru.crealex.kafka.streams.model.Title;
+import ru.crealex.kafka.streams.model.WorkTime;
 
 import java.io.IOException;
 import java.util.Map;
@@ -16,7 +17,13 @@ import java.util.Map;
 @Slf4j
 public class JsonPOJOSerializer<T> implements Serializer<T>, Deserializer<T>, Serde<T> {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-//    private Class<T> clazz;
+    private Class<T> clazz;
+
+    public JsonPOJOSerializer() {}
+
+    public JsonPOJOSerializer(Class<T> clazz) {
+        this.clazz = clazz;
+    }
 
     @Override
     public T deserialize(String topic, byte[] data) {
@@ -25,13 +32,22 @@ public class JsonPOJOSerializer<T> implements Serializer<T>, Deserializer<T>, Se
         }
 
         try {
-            log.warn("topic:" + topic);
-            return (T) OBJECT_MAPPER.readValue(data, Title.class);
+            return (T) OBJECT_MAPPER.readValue(data, clazz);
         } catch (final IOException e) {
             log.error(e.getMessage());
             return null;
-//            throw new DeserializationException(e);
         }
+    }
+
+    private Class getClassType(String topic) throws ClassNotFoundException {
+        if("titles".equals(topic)) {
+            return Title.class;
+        }
+        if("times".equals(topic)) {
+            return WorkTime.class;
+        }
+
+        throw new ClassNotFoundException("Not defined POJO class for topic: " + topic);
     }
 
     @Override
