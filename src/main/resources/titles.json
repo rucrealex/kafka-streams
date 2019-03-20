@@ -1,0 +1,7 @@
+[
+  {"id": 1, "name": "Jhon Snow", "role": "Team Lead", "isManager": true },
+  {"id": 2, "name": "Billy Bonce", "role": "Developer", "isManager": false},
+  {"id": 3, "name": "Jim Harris", "role": "Developer", "isManager": false},
+  {"id": 4, "name": "Sandra Black", "role": "Product owner", "isManager": true},
+  {"id": 5, "name": "Tom Clifford", "role": "Developer", "isManager": false}
+]
