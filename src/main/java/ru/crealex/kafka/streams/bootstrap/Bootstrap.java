@@ -54,23 +54,46 @@ public class Bootstrap {
         titlesWithKeys.filter((key, value) -> value != null)
                 .foreach((key, value) -> log.debug(key + " " + String.valueOf(value)));
 
-        KStream<String, TitleTime> joined = titlesWithKeys.leftJoin(worksTimesWithKey, (title, time) -> {
-                    TitleTime titleTime = new TitleTime();
-                    log.debug(String.valueOf(title));
-                    titleTime.setId(title.getId());
-                    titleTime.setName(title.getName());
-                    if(time != null) {
-                        titleTime.setSumHours(time.getHours());
-                    } else {
-                        titleTime.setSumHours(0L);
-                    }
+        KStream<String, TitleTime> joined = titlesWithKeys.join(worksTimesWithKey, new ValueJoiner<Title, WorkTime, TitleTime>() {
+                    @Override
+                    public TitleTime apply(Title title, WorkTime time) {
+                        log.debug("time:" + String.valueOf(time));
+                        log.debug("title:" + String.valueOf(title));
+                        if (title == null || time == null) {
+                            return null;
+                        }
 
-                    return titleTime;
-                },
-                JoinWindows.of(TimeUnit.SECONDS.toDays(7)),
+                        if (title.getId().equals(time.getTitleId())) {
+                            TitleTime titleTime = new TitleTime();
+                            titleTime.setId(title.getId());
+                            titleTime.setName(title.getName());
+                            return titleTime;
+                        }
+                        return null;
+                    }
+                }, JoinWindows.of(TimeUnit.SECONDS.toDays(7)),
                 Joined.with(Serdes.String(), new JsonPOJOSerializer<>(Title.class), new JsonPOJOSerializer<>(WorkTime.class)));
 
-        joined.foreach((key, value) -> log.debug(key + " " + String.valueOf(value)));
+
+//        worksTimesWithKey.join(titlesWithKeys, (time, title) -> {
+//                    TitleTime titleTime = new TitleTime();
+//                    log.debug(String.valueOf(time));
+//                    log.debug(String.valueOf(title));
+//                    return
+//                    titleTime.setId(title.getId());
+//                    titleTime.setName(title.getName());
+//                    if(time != null) {
+//                        titleTime.setSumHours(time.getHours());
+//                    } else {
+//                        titleTime.setSumHours(0L);
+//                    }
+//
+//                    return titleTime;
+//                },
+//                JoinWindows.of(TimeUnit.SECONDS.toDays(7)),
+//                Joined.with(Serdes.String(), new JsonPOJOSerializer<>(WorkTime.class), new JsonPOJOSerializer<>(Title.class)));
+
+        joined.foreach((key, value) -> log.debug("joined: " + key + " " + String.valueOf(value)));
 
         joined.to("titles-output");
 
