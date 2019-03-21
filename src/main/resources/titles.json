@@ -1,7 +1,13 @@
 [
-  {"id": 1, "name": "Jhon Snow", "role": "Team Lead", "isManager": true },
-  {"id": 2, "name": "Billy Bonce", "role": "Developer", "isManager": false},
-  {"id": 3, "name": "Jim Harris", "role": "Developer", "isManager": false},
-  {"id": 4, "name": "Sandra Black", "role": "Product owner", "isManager": true},
-  {"id": 5, "name": "Tom Clifford", "role": "Developer", "isManager": false}
+  1:{"id": 1, "name": "Jhon Snow", "role": "Team Lead", "isManager": true },
+  2:{"id": 2, "name": "Billy Bonce", "role": "Developer", "isManager": false},
+  3:{"id": 3, "name": "Jim Harris", "role": "Developer", "isManager": false},
+  4:{"id": 4, "name": "Sandra Black", "role": "Product owner", "isManager": true},
+  5:{"id": 5, "name": "Tom Clifford", "role": "Developer", "isManager": false}
+],
+[
+  1:{"titleId": 1, "hours": 3},
+  1:{"titleId": 1, "hours": 1},
+  2:{"titleId": 2, "hours": 3},
+  2:{"titleId": 2, "hours": 4},
 ]
