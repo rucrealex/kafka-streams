@@ -1,15 +1,14 @@
 package ru.crealex.kafka.streams.model;
 
 import lombok.Data;
-import lombok.ToString;
 
 @Data
-public class TitleTime {
+public class Time {
     private Long id;
     private Long sumHours;
     private Long eventCounts;
 
-    public TitleTime add(WorkTime time) {
+    public Time add(WorkTime time) {
         if (time.getTitleId() == null || time.getHours() == null) {
             throw new IllegalArgumentException("Invalid time event: " + String.valueOf(time));
         }

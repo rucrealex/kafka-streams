@@ -5,9 +5,9 @@ import lombok.Data;
 import lombok.ToString;
 
 @Data
-public class Title {
+public class User {
     private Long id;
     private String name;
-    private String role;
+    private String title;
     private Boolean isManager;
 }

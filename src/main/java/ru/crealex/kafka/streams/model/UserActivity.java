@@ -4,7 +4,14 @@ import lombok.Data;
 
 @Data
 public class UserActivity {
-    private Long id;
-    private String name;
-    private Long hours;
+    private User user;
+    private Time time;
+
+    public UserActivity() {
+    }
+
+    public UserActivity(User user, Time time) {
+        this.user = user;
+        this.time = time;
+    }
 }

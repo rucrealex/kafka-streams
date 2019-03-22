@@ -2,13 +2,12 @@ package ru.crealex.kafka.streams.utility;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.xml.internal.ws.encoding.soap.DeserializationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
-import ru.crealex.kafka.streams.model.Title;
+import ru.crealex.kafka.streams.model.User;
 import ru.crealex.kafka.streams.model.WorkTime;
 
 import java.io.IOException;
@@ -41,7 +40,7 @@ public class JsonPOJOSerializer<T> implements Serializer<T>, Deserializer<T>, Se
 
     private Class getClassType(String topic) throws ClassNotFoundException {
         if("titles".equals(topic)) {
-            return Title.class;
+            return User.class;
         }
         if("times".equals(topic)) {
             return WorkTime.class;
