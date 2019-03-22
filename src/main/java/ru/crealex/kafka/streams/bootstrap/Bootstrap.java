@@ -45,23 +45,6 @@ public class Bootstrap {
         final KTable<String, User> users = builder.table("users", Consumed.with(Serdes.String(), JsonSerde.USER_SERDE));
         final KStream<String, WorkTime> times = builder.stream("times", Consumed.with(Serdes.String(), JsonSerde.WORKTIME_SERDE));
 
-//        KStream<String, WorkTime> worksTimesWithKey = workTimes
-//                .filter((key, workTime) -> workTime != null)
-//                .selectKey((key, workTime) -> String.valueOf(workTime.getTitleId()));
-
-//        users.filter((key, value) -> value != null)
-//                .foreach((key, value) -> log.debug("prn key: " + key + ", value:" + String.valueOf(value)));
-
-
-//        KStream<String, User> titlesWithKeys = users
-//                .filter((key, title) -> title != null)
-//                .selectKey((key, title) -> String.valueOf(title.getId()));
-
-//        times.filter((key, value) -> value != null)
-//                .foreach((key, value) -> log.debug("prn key: " + key + ", value:" + String.valueOf(value)));
-
-
-
         KStream<String, Time> userTimes = times.groupByKey()
                 .windowedBy(TimeWindows.of(TimeUnit.MINUTES.toMillis(5)))
                 .aggregate(Time::new, ((key, value, aggregateTime) -> aggregateTime.add(value)),
@@ -75,8 +58,6 @@ public class Bootstrap {
                     }
                 });
 
-        //        userTimes.to("times-output", Produced.keySerde(WindowedSerdes.timeWindowedSerdeFrom(String.class)));
-
         userTimes.to("times-output");
 
         KStream<String, UserActivity> joined = userTimes.leftJoin(users, new ValueJoiner<Time, User, UserActivity>() {
@@ -85,84 +66,8 @@ public class Bootstrap {
                 return new UserActivity(user, time);
             }
         }, Joined.with(Serdes.String(), JsonSerde.TIME_SERDE, JsonSerde.USER_SERDE));
-//
+
         joined.to("users-output", Produced.valueSerde(JsonSerde.USER_WORKTIME_SERDE));
-
-//        userTimes.filter((key, value) -> value != null)
-//                .foreach((key, value) -> log.debug("prn key: " + key + ", value:" + String.valueOf(value)));
-
-
-//        KStream<String, User> titlesOutput = users.groupByKey().reduce(
-//                (aggVal, newVal) -> {
-//                    log.debug("aggVal:" + aggVal);
-//                    log.debug("newVal:" + newVal);
-//                    return newVal;
-//                }, Materialized.with(Serdes.String(), new JsonPOJOSerializer<>(User.class))
-//        ).toStream();
-//
-//        titlesOutput.to("users-output2");
-
-//        KTable<String, WorkTime> reduce = times.filter((key, value) -> value != null)
-//                .groupByKey()
-//                .reduce((value1, value2) -> {
-//
-//                });
-//                .
-//                .reduce((value1, value2) -> {
-//                    WorkTime workTime = new WorkTime();
-//                    if(value1 != null && value2 != null) {
-//                        workTime.setHours(value1.getHours() + value2.getHours());
-//                    } else {
-//                        workTime.setHours(value1.getHours());
-//                    }
-//                    return workTime;
-//                });
-//        reduce.toStream().to("times-output");
-
-
-//        KStream<String, Time> joined = users.join(times, (title, time) -> {
-//                    log.debug("time: " + String.valueOf(time));
-//                    log.debug("title: " + String.valueOf(title));
-//                    if (title == null || time == null) {
-//                        return null;
-//                    }
-//
-//                    if (title.getId().equals(time.getTitleId())) {
-//                        Time titleTime = new Time();
-//                        titleTime.setId(title.getId());
-//                        titleTime.setName(title.getName());
-//                        titleTime.setTitle(title.getTitle());
-//                        titleTime.setIsManager(title.getIsManager());
-//                        titleTime.setSumHours(time.getHours());
-//                        return titleTime;
-//                    }
-//                    return null;
-//                }, JoinWindows.of(TimeUnit.MINUTES.toMillis(1)),
-//                Joined.with(Serdes.String(), new JsonPOJOSerializer<>(User.class), new JsonPOJOSerializer<>(WorkTime.class)));
-
-
-//        worksTimesWithKey.join(titlesWithKeys, (time, title) -> {
-//                    Time titleTime = new Time();
-//                    log.debug(String.valueOf(time));
-//                    log.debug(String.valueOf(title));
-//                    return
-//                    titleTime.setId(title.getId());
-//                    titleTime.setName(title.getName());
-//                    if(time != null) {
-//                        titleTime.setSumHours(time.getHours());
-//                    } else {
-//                        titleTime.setSumHours(0L);
-//                    }
-//
-//                    return titleTime;
-//                },
-//                JoinWindows.of(TimeUnit.SECONDS.toDays(7)),
-//                Joined.with(Serdes.String(), new JsonPOJOSerializer<>(WorkTime.class), new JsonPOJOSerializer<>(User.class)));
-
-//        joined.foreach((key, value) -> log.debug("joined: " + key + " " + String.valueOf(value)));
-//
-//        joined.to("users-output");
-
 
 
         Topology topology = builder.build();
