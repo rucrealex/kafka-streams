@@ -1,0 +1,18 @@
+users:
+1:{"id": 1, "name": "Jhon Snow", "title": "Team Lead", "isManager": true }
+2:{"id": 2, "name": "Billy Bonce", "title": "Developer", "isManager": false}
+3:{"id": 3, "name": "Jim Harris", "title": "Developer", "isManager": false}
+4:{"id": 4, "name": "Sandra Black", "title": "Product owner", "isManager": true}
+5:{"id": 5, "name": "Tom Clifford", "title": "Developer", "isManager": false}
+
+times:
+1:{"userId": 1, "hours": 1}
+1:{"userId": 1, "hours": 1}
+1:{"userId": 1, "hours": 1}
+
+-> 1:{"userId": 1, "hours": 3, "eventCount": 3}
+
+2:{"userId": 2, "hours": 3}
+3:{"userId": 3, "hours": 3}
+4:{"userId": 4, "hours": 4}
+5:{"userId": 5, "hours": 1}

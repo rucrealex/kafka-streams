@@ -46,7 +46,7 @@ public class Bootstrap {
         final KStream<String, TimeEvent> times = builder.stream("times", Consumed.with(Serdes.String(), JsonSerde.TIME_EVENT_SERDE));
 
         KStream<String, SummaryTime> userTimes = times.groupByKey()
-                .windowedBy(TimeWindows.of(TimeUnit.MINUTES.toMillis(5)))
+                .windowedBy(TimeWindows.of(TimeUnit.SECONDS.toMillis(10)))
                 .aggregate(SummaryTime::new, (new Aggregator<String, TimeEvent, SummaryTime>() {
                             @Override
                             public SummaryTime apply(String key, TimeEvent value, SummaryTime aggregateTimeEvent) {
