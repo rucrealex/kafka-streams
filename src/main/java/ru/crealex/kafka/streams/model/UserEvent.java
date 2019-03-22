@@ -1,13 +1,17 @@
 package ru.crealex.kafka.streams.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Data
-public class User {
+@AllArgsConstructor
+@NoArgsConstructor
+public class UserEvent {
     private Long id;
-    private String name;
     private String title;
+    private String name;
     private Boolean isManager;
 }

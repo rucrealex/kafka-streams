@@ -3,18 +3,18 @@ package ru.crealex.kafka.streams.model;
 import lombok.Data;
 
 @Data
-public class Time {
+public class SummaryTime {
     private Long id;
     private Long sumHours;
     private Long eventCounts;
 
-    public Time add(WorkTime time) {
-        if (time.getTitleId() == null || time.getHours() == null) {
-            throw new IllegalArgumentException("Invalid time event: " + String.valueOf(time));
+    public SummaryTime add(TimeEvent time) {
+        if (time.getUserId() == null || time.getHours() == null) {
+            throw new IllegalArgumentException("Invalid summaryTime event: " + String.valueOf(time));
         }
 
         if (this.id == null) {
-            this.setId(time.getTitleId());
+            this.setId(time.getUserId());
         }
 
         if (this.sumHours == null) {

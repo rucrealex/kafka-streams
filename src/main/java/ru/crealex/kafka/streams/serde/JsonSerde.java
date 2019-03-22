@@ -1,14 +1,14 @@
 package ru.crealex.kafka.streams.serde;
 
-import ru.crealex.kafka.streams.model.Time;
-import ru.crealex.kafka.streams.model.User;
+import ru.crealex.kafka.streams.model.SummaryTime;
+import ru.crealex.kafka.streams.model.UserEvent;
 import ru.crealex.kafka.streams.model.UserActivity;
-import ru.crealex.kafka.streams.model.WorkTime;
+import ru.crealex.kafka.streams.model.TimeEvent;
 import ru.crealex.kafka.streams.utility.JsonPOJOSerializer;
 
 public class JsonSerde {
-    public static final JsonPOJOSerializer<User> USER_SERDE = new JsonPOJOSerializer<>(User.class);
-    public static final JsonPOJOSerializer<Time> TIME_SERDE = new JsonPOJOSerializer<>(Time.class);
-    public static final JsonPOJOSerializer<WorkTime> WORKTIME_SERDE = new JsonPOJOSerializer<>(WorkTime.class);
-    public static final JsonPOJOSerializer<UserActivity> USER_WORKTIME_SERDE = new JsonPOJOSerializer<>(UserActivity.class);
+    public static final JsonPOJOSerializer<UserEvent> USER_EVENT_SERDE = new JsonPOJOSerializer<>(UserEvent.class);
+    public static final JsonPOJOSerializer<TimeEvent> TIME_EVENT_SERDE = new JsonPOJOSerializer<>(TimeEvent.class);
+    public static final JsonPOJOSerializer<SummaryTime> SUMMARY_TIME_SERDE = new JsonPOJOSerializer<>(SummaryTime.class);
+    public static final JsonPOJOSerializer<UserActivity> USER_ACTITITY_SERDE = new JsonPOJOSerializer<>(UserActivity.class);
 }

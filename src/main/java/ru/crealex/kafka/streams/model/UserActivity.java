@@ -4,14 +4,14 @@ import lombok.Data;
 
 @Data
 public class UserActivity {
-    private User user;
-    private Time time;
+    private UserEvent user;
+    private SummaryTime summaryTime;
 
     public UserActivity() {
     }
 
-    public UserActivity(User user, Time time) {
+    public UserActivity(UserEvent user, SummaryTime summaryTime) {
         this.user = user;
-        this.time = time;
+        this.summaryTime = summaryTime;
     }
 }

@@ -6,9 +6,9 @@
   5:{"id": 5, "name": "Tom Clifford", "title": "Developer", "isManager": false}
 ],
 [
-  1:{"titleId": 1, "hours": 1},
-  1:{"titleId": 1, "hours": 1},
-  2:{"titleId": 2, "hours": 3},
-  4:{"titleId": 4, "hours": 4},
-  5:{"titleId": 5, "hours": 1},
+  1:{"userId": 1, "hours": 1},
+  1:{"userId": 1, "hours": 1},
+  2:{"userId": 2, "hours": 3},
+  4:{"userId": 4, "hours": 4},
+  5:{"userId": 5, "hours": 1},
 ]

@@ -7,8 +7,8 @@ import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
-import ru.crealex.kafka.streams.model.User;
-import ru.crealex.kafka.streams.model.WorkTime;
+import ru.crealex.kafka.streams.model.UserEvent;
+import ru.crealex.kafka.streams.model.TimeEvent;
 
 import java.io.IOException;
 import java.util.Map;
@@ -40,10 +40,10 @@ public class JsonPOJOSerializer<T> implements Serializer<T>, Deserializer<T>, Se
 
     private Class getClassType(String topic) throws ClassNotFoundException {
         if("titles".equals(topic)) {
-            return User.class;
+            return UserEvent.class;
         }
         if("times".equals(topic)) {
-            return WorkTime.class;
+            return TimeEvent.class;
         }
 
         throw new ClassNotFoundException("Not defined POJO class for topic: " + topic);
