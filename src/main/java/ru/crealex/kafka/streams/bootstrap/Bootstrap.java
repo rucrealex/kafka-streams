@@ -9,23 +9,36 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.state.WindowStore;
+import org.apache.kafka.streams.state.KeyValueStore;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import ru.crealex.kafka.streams.model.SummaryTime;
-import ru.crealex.kafka.streams.model.UserEvent;
-import ru.crealex.kafka.streams.model.UserActivity;
 import ru.crealex.kafka.streams.model.TimeEvent;
+import ru.crealex.kafka.streams.model.UserEvent;
+import ru.crealex.kafka.streams.model.UserSummary;
+import ru.crealex.kafka.streams.repositories.TimeRepository;
+import ru.crealex.kafka.streams.repositories.UserRepository;
+import ru.crealex.kafka.streams.repositories.UserSummaryRepository;
 import ru.crealex.kafka.streams.serde.JsonSerde;
 import ru.crealex.kafka.streams.utility.JsonPOJOSerializer;
 
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
 public class Bootstrap {
+
+    private final TimeRepository timeRepository;
+    private final UserRepository userRepository;
+    private final UserSummaryRepository userSummaryRepository;
+
+    @Autowired
+    public Bootstrap(TimeRepository timeRepository, UserRepository userRepository, UserSummaryRepository userSummaryRepository) {
+        this.timeRepository = timeRepository;
+        this.userRepository = userRepository;
+        this.userSummaryRepository = userSummaryRepository;
+    }
 
     @EventListener
     public void onApplicationEvent(ContextRefreshedEvent event) {
@@ -39,36 +52,34 @@ public class Bootstrap {
         properties.put(StreamsConfig.DEFAULT_WINDOWED_VALUE_SERDE_INNER_CLASS, JsonPOJOSerializer.class);
         properties.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
         properties.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 1000);
-        properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+//        properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
 
         final StreamsBuilder builder = new StreamsBuilder();
+        log.info("Application " + properties.getProperty(StreamsConfig.APPLICATION_ID_CONFIG) + " started ...");
+
         final KTable<String, UserEvent> users = builder.table("users", Consumed.with(Serdes.String(), JsonSerde.USER_EVENT_SERDE));
         final KStream<String, TimeEvent> times = builder.stream("times", Consumed.with(Serdes.String(), JsonSerde.TIME_EVENT_SERDE));
 
-        KStream<String, SummaryTime> userTimes = times.groupByKey()
-                .windowedBy(TimeWindows.of(TimeUnit.SECONDS.toMillis(10)))
-                .aggregate(SummaryTime::new, (new Aggregator<String, TimeEvent, SummaryTime>() {
-                            @Override
-                            public SummaryTime apply(String key, TimeEvent value, SummaryTime aggregateTimeEvent) {
-                                return aggregateTimeEvent.add(value);
-                            }
-                        }),
-                        Materialized.<String, SummaryTime, WindowStore<Bytes, byte[]>>as("times-aggregates")
-                                .withValueSerde(new JsonPOJOSerializer<>(SummaryTime.class)))
-                .toStream()
-                .selectKey((key, value) -> String.valueOf(value.getId()));
+        users.toStream().foreach((key, userEvent) -> {
+            userRepository.save(userEvent);
+        });
 
-        userTimes.to("times-output");
+        times.foreach((key, timeEvent) -> {
+            timeRepository.save(timeEvent);
+        });
 
-        KStream<String, UserActivity> joined = userTimes.leftJoin(users, new ValueJoiner<SummaryTime, UserEvent, UserActivity>() {
-            @Override
-            public UserActivity apply(SummaryTime time, UserEvent user) {
-                return new UserActivity(user, time);
-            }
-        }, Joined.with(Serdes.String(), JsonSerde.SUMMARY_TIME_SERDE, JsonSerde.USER_EVENT_SERDE));
+        KTable<String, TimeEvent> aggregated = times.groupByKey()
+                .aggregate(TimeEvent::new, ((key, time, aggregate) -> aggregate.addTime(time)),
+                        Materialized.<String, TimeEvent, KeyValueStore<Bytes, byte[]>>as("aggregated-store").withValueSerde(JsonSerde.TIME_EVENT_SERDE));
 
-        joined.to("users-output", Produced.valueSerde(JsonSerde.USER_ACTITITY_SERDE));
+        KTable<String, UserSummary> joined =
+                users.join(aggregated, (userEvent, timeEvent) -> new UserSummary(timeEvent.getHours(), userEvent),
+                        Materialized.<String, UserSummary, KeyValueStore<Bytes, byte[]>>as("joined-store").withValueSerde(JsonSerde.USER_ACTITITY_SERDE));
 
+        joined.toStream().peek((key, userSummary) -> {
+            log.debug("save user summary: " + userSummary + " in database");
+            userSummaryRepository.save(userSummary);
+        }).to("users-output");
 
         Topology topology = builder.build();
         log.info(topology.describe().toString());

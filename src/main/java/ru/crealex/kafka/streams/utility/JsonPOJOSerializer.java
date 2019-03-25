@@ -7,8 +7,6 @@ import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
-import ru.crealex.kafka.streams.model.UserEvent;
-import ru.crealex.kafka.streams.model.TimeEvent;
 
 import java.io.IOException;
 import java.util.Map;
@@ -18,7 +16,8 @@ public class JsonPOJOSerializer<T> implements Serializer<T>, Deserializer<T>, Se
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private Class<T> clazz;
 
-    public JsonPOJOSerializer() {}
+    public JsonPOJOSerializer() {
+    }
 
     public JsonPOJOSerializer(Class<T> clazz) {
         this.clazz = clazz;
@@ -38,17 +37,6 @@ public class JsonPOJOSerializer<T> implements Serializer<T>, Deserializer<T>, Se
         }
     }
 
-    private Class getClassType(String topic) throws ClassNotFoundException {
-        if("titles".equals(topic)) {
-            return UserEvent.class;
-        }
-        if("times".equals(topic)) {
-            return TimeEvent.class;
-        }
-
-        throw new ClassNotFoundException("Not defined POJO class for topic: " + topic);
-    }
-
     @Override
     public Serializer<T> serializer() {
         return this;
@@ -61,7 +49,6 @@ public class JsonPOJOSerializer<T> implements Serializer<T>, Deserializer<T>, Se
 
     @Override
     public void configure(Map<String, ?> configs, boolean isKey) {
-//        clazz = (Class<T>) configs.get("JsonPOJOClass");
     }
 
     @Override
